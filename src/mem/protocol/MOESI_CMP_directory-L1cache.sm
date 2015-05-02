@@ -413,19 +413,19 @@ machine(L1Cache, "Directory protocol")
             // Check to see if it is in the OTHER L1
             if (is_valid(L1Icache_entry)) {
               // The block is in the wrong L1, put the request on the queue to the shared L2
-              predictor.invalidatePrediction(address, machineID);
+              predictor.invalidatePrediction(in_msg.LineAddress, machineID);
               trigger(Event:L1_Replacement, in_msg.LineAddress,
                       L1Icache_entry, TBEs[in_msg.LineAddress]);
             }
             if (L1Dcache.cacheAvail(in_msg.LineAddress)) {
               // L1 does't have the line, but we have space for it in the L1 let's see if the L2 has it
-              predictor.invalidatePrediction(address, machineID);
+              predictor.invalidatePrediction(in_msg.LineAddress, machineID);
               trigger(mandatory_request_type_to_event(in_msg.Type),
                       in_msg.LineAddress, L1Dcache_entry,
                       TBEs[in_msg.LineAddress]);
             } else {
               // No room in the L1, so we need to make room in the L1
-              predictor.invalidatePrediction(address, machineID);
+              predictor.invalidatePrediction(in_msg.LineAddress, machineID);
               trigger(Event:L1_Replacement,
                       L1Dcache.cacheProbe(in_msg.LineAddress),
                       getL1DCacheEntry(L1Dcache.cacheProbe(in_msg.LineAddress)),

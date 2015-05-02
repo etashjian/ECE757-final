@@ -1,6 +1,6 @@
 #include "mem/ruby/structures/StickyPred.hh"
 #include "mem/ruby/system/System.hh"
-#include "debug/RubySnoopPred.hh"
+//#include "debug/RubySnoopPred.hh"
 #include "debug/RubySlicc.hh"
 
 using namespace std;
@@ -60,7 +60,7 @@ NetDest StickyPred::getPrediction(Address addr, MachineID local) {
         prediction.add( (*predCache)[index]->invalidator );
     }
 
-    DPRINTF(RubySnoopPred, "[StickyPred] L1 Prediction: %s\n", prediction);
+    //DPRINTF(RubySnoopPred, "[StickyPred] L1 Prediction: %s\n", prediction);
     return prediction;
 }
 
@@ -187,12 +187,12 @@ bool StickyPred::invalidatePrediction(Address addr, MachineID inv){
 }
 
 void StickyPred::dumpPredCache(){
-    DPRINTF(RubySnoopPred, "----Dumping PredCache---------");
-    DPRINTF(RubySnoopPred, "Index\t|Tag\t\t| Mask\t\t|Invalidator\n");
+    //DPRINTF(RubySnoopPred, "----Dumping PredCache---------");
+    //DPRINTF(RubySnoopPred, "Index\t|Tag\t\t| Mask\t\t|Invalidator\n");
     for(PredCache_t::iterator it = predCache->begin();
             it != predCache->end(); it++){
-        DPRINTF(RubySnoopPred, "0x%x\t", it->first);
-        DPRINTF(RubySnoopPred, "0x%lx\t", it->second->tag.getAddress());
+        //DPRINTF(RubySnoopPred, "0x%x\t", it->first);
+        //DPRINTF(RubySnoopPred, "0x%lx\t", it->second->tag.getAddress());
         //Debug::RubySnoopPred << it->second->prediction << "\t";
     }
 }
