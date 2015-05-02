@@ -1,7 +1,0 @@
-#! /bin/sh
-echo 'PARSEC raytrace benchmark'
-cd home/Benchmarks/parsec-2.1/bin/
-./parsecmgmt -a run -x pre -i simlarge -n 8 -p raytrace
-echo
-echo 'done'
-m5 exit
