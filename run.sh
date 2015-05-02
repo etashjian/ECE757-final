@@ -25,8 +25,8 @@ configs/example/fs.py \
 --restore-with-cpu=timing \
 --cpu-type=timing \
 --num-l2caches=1 \
---l1d_size=32k \
---l1i_size=32k \
+--l1d_size=32kB \
+--l1i_size=32kB \
 --l2_size=1MB \
 --script=benchmark_scripts/$SCRIPT.rcS
 #--script=configs/boot/hack_back_ckpt.rcS
