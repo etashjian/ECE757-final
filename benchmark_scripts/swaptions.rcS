@@ -1,0 +1,7 @@
+#! /bin/sh
+echo 'PARSEC swaptions benchmark'
+cd home/Benchmarks/parsec-2.1/bin/
+./parsecmgmt -a run -x pre -i simlarge -n 8 -p swaptions
+echo
+echo 'done'
+m5 exit
