@@ -94,6 +94,20 @@ structure (NetDest, external = "yes", non_obj="yes") {
   MachineID smallestElement(MachineType);
 }
 
+structure (SnoopBasicPred, external = "yes", non_obj="yes") {
+    NetDest getPrediction(Address addr, MachineID local);
+    void profileInMsg(int, bool);
+    int getGETS();
+    int getGETX();
+    int getPUTX();
+}
+
+structure (StickyPred, external = "yes", non_obj="yes") {
+    NetDest getPrediction(Address addr, MachineID local);
+    void addPrediction(Address addr, MachineID provider, NetDest predMask);
+    bool invalidatePrediction(Address addr, MachineID inv);
+}
+
 structure (Sequencer, external = "yes") {
   void readCallback(Address, DataBlock);
   void readCallback(Address, DataBlock, bool);
