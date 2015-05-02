@@ -45,6 +45,7 @@ python_class_map = {
                     "DMASequencer": "DMASequencer",
                     "Prefetcher":"Prefetcher",
                     "Cycles":"Cycles",
+                    "MulticastScoreboard":"MulticastScoreboard",
                    }
 
 class StateMachine(Symbol):

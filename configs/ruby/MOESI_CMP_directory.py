@@ -133,6 +133,9 @@ def create_system(options, full_system, system, dma_ports, ruby_system):
         exec("ruby_system.l2_cntrl%d = l2_cntrl" % i)
         l2_cntrl_nodes.append(l2_cntrl)
 
+        # connect multicast scoreboard
+        l2_cntrl.sb = MulticastScoreboard()
+
         # Connect the L2 controllers and the network
         l2_cntrl.GlobalRequestFromL2Cache = ruby_system.network.slave
         l2_cntrl.L1RequestFromL2Cache = ruby_system.network.slave
