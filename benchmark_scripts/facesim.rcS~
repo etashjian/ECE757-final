@@ -1,7 +1,0 @@
-#! /bin/sh
-echo 'PARSEC facesim benchmark'
-cd home/Benchmarks/parsec-2.1/bin/
-./parsecmgmt -a run -x pre -i simlarge -p facesim
-echo
-echo 'done'
-m5 exit
