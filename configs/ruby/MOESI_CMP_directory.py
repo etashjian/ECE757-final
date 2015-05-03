@@ -55,7 +55,7 @@ def create_system(options, full_system, system, dma_ports, ruby_system):
         panic("This script requires the MOESI_CMP_directory protocol to be built.")
 
     cpu_sequencers = []
-    
+
     #
     # The ruby network creation expects the list of nodes in the system to be
     # consistent with the NetDest list.  Therefore the l1 controller nodes must be
@@ -114,6 +114,8 @@ def create_system(options, full_system, system, dma_ports, ruby_system):
         l1_cntrl.requestToL1Cache =  ruby_system.network.master
         l1_cntrl.responseToL1Cache =  ruby_system.network.master
 
+        l1_cntrl.predictor = RubyStickyPred(numPredTableEntry = options.numPredTableEntry,
+                                            numStickyEntry = options.numStickyEntry)
 
     l2_index_start = block_size_bits + l2_bits
 
@@ -129,7 +131,7 @@ def create_system(options, full_system, system, dma_ports, ruby_system):
                                       L2cache = l2_cache,
                                       transitions_per_cycle = options.ports,
                                       ruby_system = ruby_system)
-        
+
         exec("ruby_system.l2_cntrl%d = l2_cntrl" % i)
         l2_cntrl_nodes.append(l2_cntrl)
 
@@ -185,7 +187,7 @@ def create_system(options, full_system, system, dma_ports, ruby_system):
         dma_seq = DMASequencer(version = i,
                                ruby_system = ruby_system,
                                slave = dma_port)
-        
+
         dma_cntrl = DMA_Controller(version = i,
                                    dma_sequencer = dma_seq,
                                    transitions_per_cycle = options.ports,

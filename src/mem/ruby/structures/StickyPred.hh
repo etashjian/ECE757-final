@@ -44,10 +44,14 @@ class StickyPred : public SnoopBasicPred {
 
     // ruby interface
     NetDest getPrediction(Address addr, MachineID local);
+    NetDest getPrediction(Address addr, MachineID local, MachineID req);
+    NetDest getPrediction(Address addr, MachineID local, int inMsg);
     void addPrediction(Address addr, MachineID provider, NetDest predMask);
     bool invalidatePrediction(Address addr, MachineID inv);
 
     void dumpPredCache();
+    int inMsgGETS();
+    int inMsgGETX();
 
     // MANDATORY SIM OBJECT METHODS
     StickyPred& operator=(const StickyPred& obj);
@@ -64,6 +68,7 @@ class StickyPred : public SnoopBasicPred {
     bool isValidEntry(PredCacheIndex index);
     bool isTagMatch(Address addr, PredCacheIndex index);
     void mergeMaskIntoEntry(PredCacheIndex index, NetDest predMask);
+    NetDest doStick(PredCacheIndex index);
 
  private:
     int size_PredTable;

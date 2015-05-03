@@ -32,6 +32,99 @@ RubyStickyPredParams::create()
     return new StickyPred(this);
 }
 
+int StickyPred::inMsgGETS(){
+    return 0;
+}
+
+int StickyPred::inMsgGETX(){
+    return 1;
+}
+
+NetDest StickyPred::doStick(PredCacheIndex thisIndex){
+    assert( isValidEntry(thisIndex) == true );
+    assert( num_StickyOneside>=1 );
+
+    NetDest thisPred = getPredCachePrediction(thisIndex);
+    if(num_StickyOneside*2 > size_PredTable)
+        num_StickyOneside = size_PredTable/2 - 1;
+
+    if(num_StickyOneside*2 > predCache->size())
+        return thisPred;
+
+
+    // for positive side
+    for( int i = 1; i <= num_StickyOneside; i++ ){
+        PredCacheIndex itIndex = (thisIndex + i)%size_PredTable;
+        if( isValidEntry(itIndex) == false )
+            continue;
+        NetDest itPred = getPredCachePrediction(itIndex);
+        thisPred = thisPred.OR(itPred);
+    }
+
+    // for negative side
+    for( int i = -1; i >= -num_StickyOneside; i-- ){
+        PredCacheIndex itIndex = (thisIndex + i)%size_PredTable;
+        if( isValidEntry(itIndex) == false )
+            continue;
+        NetDest itPred = getPredCachePrediction(itIndex);
+        thisPred = thisPred.OR(itPred);
+    }
+
+    // update the entry
+    return thisPred;
+}
+
+NetDest StickyPred::getPrediction(Address addr, MachineID local, MachineID req){
+    NetDest prediction;
+
+    // add L1 nodes to mask
+    prediction.add(local);
+
+    // add L2 node to mask
+    for (NodeID i = 0; i < MachineType_base_count(MachineType_L2Cache); i++) {
+      MachineID mach = {MachineType_L2Cache, i};
+      prediction.add(mach);
+    }
+
+    prediction.add(req);
+
+    return prediction;
+}
+
+// this is for Ruby machine
+NetDest StickyPred::getPrediction(Address addr, MachineID local, int inMsg) {
+    NetDest prediction;
+
+    // add L1 nodes to mask
+    prediction.add(local);
+
+    // add L2 node to mask
+    for (NodeID i = 0; i < MachineType_base_count(MachineType_L2Cache); i++) {
+      MachineID mach = {MachineType_L2Cache, i};
+      prediction.add(mach);
+    }
+
+    // TODO: this could be not totally good
+    PredCacheIndex index = getPredCacheIndex(addr);
+    if( isValidEntry(index) == true ){
+        // get prediction from PredCache
+        if( inMsg == inMsgGETX() ){
+            //bool result = updatePredCache(index);
+            NetDest stickyPred = doStick(index);
+            prediction = prediction.OR(stickyPred);
+        }else{
+            prediction.add( (*predCache)[index]->invalidator );
+        }
+    }
+    else if( predCache->find(index) != predCache->end()){
+        // index exits, can provide invalidator
+        //prediction.add( (*predCache)[index]->invalidator );
+    }
+
+    //DPRINTF(RubySnoopPred, "[StickyPred] L1 Prediction: %s\n", prediction);
+    return prediction;
+}
+
 // this is for Ruby machine
 NetDest StickyPred::getPrediction(Address addr, MachineID local) {
     NetDest prediction;
@@ -57,8 +150,9 @@ NetDest StickyPred::getPrediction(Address addr, MachineID local) {
     }
     else if( predCache->find(index) != predCache->end()){
         // index exits, can provide invalidator
-        prediction.add( (*predCache)[index]->invalidator );
+        //prediction.add( (*predCache)[index]->invalidator );
     }
+    prediction.add( (*predCache)[index]->invalidator );
 
     //DPRINTF(RubySnoopPred, "[StickyPred] L1 Prediction: %s\n", prediction);
     return prediction;
@@ -157,7 +251,7 @@ bool StickyPred::invalidatePredCacheEntry(Address addr, MachineID inv){
 }
 
 void StickyPred::resetPredCacheTag(PredCacheIndex index, MachineID inv){
-    (*predCache)[index]->tag.setAddress(0);
+    //(*predCache)[index]->tag.setAddress(0);
     (*predCache)[index]->prediction.clear();
     (*predCache)[index]->invalidator = inv;
     //predCache->erase(index);

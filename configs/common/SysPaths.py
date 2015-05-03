@@ -50,7 +50,7 @@ def system():
         try:
                 path = env['M5_PATH'].split(':')
         except KeyError:
-                path = [ '/dist/m5/system', '/n/poolfs/z/dist/m5/system' ]
+                path = [ '/dist/m5/system', '/afs/cs.wisc.edu/u/x/i/xi/private/ECE757-final/m5_system' ]
 
         for system.dir in path:
             if os.path.isdir(system.dir):

@@ -184,6 +184,15 @@ def addCommonOptions(parser):
                       help = "cpu type for restoring from a checkpoint")
 
 
+    # Predictor options
+    parser.add_option("--numPredTableEntry", action="store", type="int",
+        default=1024,
+        help=" pred table")
+
+    parser.add_option("--numStickyEntry", action="store", type="int",
+        default=40,
+        help=" pred sticky")
+
     # CPU Switching - default switch model goes from a checkpoint
     # to a timing simple CPU with caches to warm up, then to detailed CPU for
     # data measurement
