@@ -100,6 +100,8 @@ def create_system(options, full_system, system, dma_ports, ruby_system):
                                 dcache = l1d_cache,
                                 clk_domain=system.cpu[i].clk_domain,
                                 ruby_system = ruby_system)
+        # Specify predictor
+        l1_cntrl.predictor = RubyOwnerPred()
 
         l1_cntrl.sequencer = cpu_seq
         exec("ruby_system.l1_cntrl%d = l1_cntrl" % i)
@@ -113,6 +115,7 @@ def create_system(options, full_system, system, dma_ports, ruby_system):
         l1_cntrl.responseFromL1Cache =  ruby_system.network.slave
         l1_cntrl.requestToL1Cache =  ruby_system.network.master
         l1_cntrl.responseToL1Cache =  ruby_system.network.master
+
 
 
     l2_index_start = block_size_bits + l2_bits

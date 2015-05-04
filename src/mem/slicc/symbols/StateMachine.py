@@ -46,6 +46,7 @@ python_class_map = {
                     "Prefetcher":"Prefetcher",
                     "Cycles":"Cycles",
                     "MulticastScoreboard":"MulticastScoreboard",
+                    "OwnerPred":"RubyOwnerPred",
                    }
 
 class StateMachine(Symbol):
