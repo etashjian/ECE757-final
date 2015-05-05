@@ -89,6 +89,7 @@ structure(RequestMsg, desc="...", interface="NetworkMessage") {
   int Len,                     desc="Length of Request";
   CoherenceRequestType Type,   desc="Type of request (GetS, GetX, PutX, etc)";
   MachineID Requestor,            desc="Node who initiated the request";
+  MachineID Sender,               desc="Node who sends the requested cache line";
   MachineType RequestorMachine,   desc="type of component";
   NetDest PredictionMask,         desc="Multicast prediction mask";
   NetDest Destination,             desc="Multicast destination mask";

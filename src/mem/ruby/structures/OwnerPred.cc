@@ -67,7 +67,7 @@ NetDest OwnerPred::getPrediction(Address pc, Address addr, MachineID local)
   return prediction;
 }
 
-void OwnerPred::updatePredictionTable( Address pc, MachineID realOwner )
+void OwnerPred::updatePredictionTable( Address pc, Address addr, MachineID realOwner )
 {
   //  increment the $2$ confidence
   const size_t pcIndx = (pc.getAddress() & ~pc.maskLowOrderBits( _tableLgSize ));

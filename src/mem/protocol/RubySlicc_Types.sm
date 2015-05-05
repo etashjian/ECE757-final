@@ -171,7 +171,7 @@ structure (MulticastScoreboard, external = "yes") {
 
 structure (OwnerPred, external="yes") {
   NetDest getPrediction( Address pc, Address addr, MachineID local );
-  void updatePredictionTable( Address pc, MachineID realOwner );
+  void updatePredictionTable( Address pc, Address addr, MachineID realOwner );
 }
 
 structure (WireBuffer, inport="yes", outport="yes", external = "yes") {

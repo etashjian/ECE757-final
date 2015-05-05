@@ -23,7 +23,7 @@ class OwnerPred : public SimObject {
     ~OwnerPred();
 
     NetDest getPrediction(Address pc, Address addr, MachineID local);
-    void updatePredictionTable( Address pc, MachineID realOwner );
+    void updatePredictionTable( Address pc, Address addr, MachineID realOwner );
 
     // MANDATORY SIM OBJECT METHODS
     OwnerPred & operator=(const OwnerPred & obj);
