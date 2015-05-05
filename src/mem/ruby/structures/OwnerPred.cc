@@ -12,6 +12,8 @@ OwnerPred::OwnerPred(const Params *p)
     _L2TableEntryArray.resize( 1 << 14 );
 }
 
+OwnerPred::~OwnerPred() {}
+
 NetDest OwnerPred::getPrediction(Address pc, Address addr, MachineID local) 
 {
   NetDest prediction;
@@ -60,9 +62,8 @@ void OwnerPred::updatePredictionTable( Address pc, Address addr, MachineID realO
 {
   //  increment the $2$ confidence
   const size_t pcIndxL1 = (pc.getAddress() & ~pc.maskLowOrderBits(11));
-//  const size_t pcIndxL2 = pc.bitSelect(2, 15) ^ addr.bitSelect(5, 18);
+  const size_t pcIndxL2 = pc.bitSelect(2, 15) ^ addr.bitSelect(5, 18);
 
-//  const OwnerPredL2Table & l2table = _L2TableEntryArray[pcIndxL2];
   OwnerPredL1Table & l1table = _L1TableEntryArray[pcIndxL1];
 
   if( realOwner.getType() == MachineType_L2Cache ) {       //  the sender is from L2
