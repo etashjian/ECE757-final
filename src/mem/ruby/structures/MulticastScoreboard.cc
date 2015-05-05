@@ -35,7 +35,7 @@ MulticastScoreboard::MulticastScoreboard(const Params *p) : SimObject(p)
 }; 
 
 ////////////////////////////////////////////////////////////////////////////////
-void MulticastScoreboard::record_GETS(MachineID l1, NetDest pred_set, NetDest sharers, bool owner_valid, MachineID owner) 
+void MulticastScoreboard::record_GETS(MachineID l1, NetDest pred_set, Address addr, NetDest sharers, bool owner_valid, MachineID owner) 
 {
   assert(l1.type == MachineType_L1Cache);
 
@@ -77,7 +77,7 @@ void MulticastScoreboard::record_GETS(MachineID l1, NetDest pred_set, NetDest sh
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MulticastScoreboard::record_GETS(MachineID l1, NetDest pred_set) 
+void MulticastScoreboard::record_GETS(MachineID l1, NetDest pred_set, Address addr) 
 {
   assert(l1.type == MachineType_L1Cache);
 
@@ -107,7 +107,7 @@ void MulticastScoreboard::record_GETS(MachineID l1, NetDest pred_set)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MulticastScoreboard::record_GETX(MachineID l1, NetDest pred_set, NetDest sharers, bool owner_valid, MachineID owner)
+void MulticastScoreboard::record_GETX(MachineID l1, NetDest pred_set, Address addr, NetDest sharers, bool owner_valid, MachineID owner)
 {
   assert(l1.type == MachineType_L1Cache);
 
@@ -151,7 +151,7 @@ void MulticastScoreboard::record_GETX(MachineID l1, NetDest pred_set, NetDest sh
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MulticastScoreboard::record_GETX(MachineID l1, NetDest pred_set)
+void MulticastScoreboard::record_GETX(MachineID l1, NetDest pred_set, Address addr)
 {
   assert(l1.type == MachineType_L1Cache);
 
@@ -181,9 +181,11 @@ void MulticastScoreboard::record_GETX(MachineID l1, NetDest pred_set)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void MulticastScoreboard::record_PUTX(MachineID l1, NetDest pred_set, NetDest sharers, bool owner_valid, MachineID owner)
+void MulticastScoreboard::record_PUTX(MachineID l1, NetDest pred_set, Address addr, NetDest sharers, bool owner_valid, MachineID owner)
 {
   assert(l1.type == MachineType_L1Cache);
+
+  return; // NOT RECORDING PUTX
 
   // update basic counts
   PUTX_count++;
@@ -224,9 +226,11 @@ void MulticastScoreboard::record_PUTX(MachineID l1, NetDest pred_set, NetDest sh
 }
 
 ////////////////////////////////////////////////////////////////////////////////  
-void MulticastScoreboard::record_PUTX(MachineID l1, NetDest pred_set)
+void MulticastScoreboard::record_PUTX(MachineID l1, NetDest pred_set, Address addr)
 {
   assert(l1.type == MachineType_L1Cache);
+
+  return; // NOT RECORDING PUTX;
 
   // update basic counts
   PUTX_count++;
@@ -381,13 +385,15 @@ void MulticastScoreboard::regStats()
         .name(name() + ".avg_nodes_in_multicast")
         .desc("Avg. number of nodes included in multicasts")
         ;
-    avg_nodes_in_multicast = (total_nodes_predicted / (PUTX_count + GETX_count + GETS_count));
+    //avg_nodes_in_multicast = (total_nodes_predicted / (PUTX_count + GETX_count + GETS_count));
+    avg_nodes_in_multicast = (total_nodes_predicted / (GETX_count + GETS_count));
 
     avg_extra_nodes_predicted
         .name(name() + ".avg_extra_nodes_predicted")
         .desc("Avg. number of extra (uncessary) nodes included in multicasts")
         ;
-    avg_extra_nodes_predicted = (extra_nodes_predicted / (PUTX_count + GETX_count + GETS_count));
+    //avg_extra_nodes_predicted = (extra_nodes_predicted / (PUTX_count + GETX_count + GETS_count));
+    avg_extra_nodes_predicted = (extra_nodes_predicted / (GETX_count + GETS_count));
   
     multicast_traffic_ratio
         .name(name() + ".multicast_traffic_ratio")
@@ -399,7 +405,8 @@ void MulticastScoreboard::regStats()
         .name(name() + ".overall_prediction_accuracy")
         .desc("Percent accuracy of all predictions made by L1's in system")
         ;
-    overall_prediction_accuracy = (accurate_GETS_predictions + accurate_GETX_predictions + accurate_PUTX_predictions) / (PUTX_count + GETX_count + GETS_count);
+    //overall_prediction_accuracy = (accurate_GETS_predictions + accurate_GETX_predictions + accurate_PUTX_predictions) / (PUTX_count + GETX_count + GETS_count);
+    overall_prediction_accuracy = (accurate_GETS_predictions + accurate_GETX_predictions) / (GETX_count + GETS_count);
 
     GETS_prediction_accuracy
         .name(name() + ".GETS_prediction_accuracy")
@@ -423,7 +430,8 @@ void MulticastScoreboard::regStats()
         .name(name() + ".overall_l2_accuracy")
         .desc("Percent of all predictions serviced by L2")
         ;
-    overall_l2_accuracy = (l2_GETS_services + l2_GETX_services + l2_PUTX_services) / (PUTX_count + GETX_count + GETS_count);
+    //overall_l2_accuracy = (l2_GETS_services + l2_GETX_services + l2_PUTX_services) / (PUTX_count + GETX_count + GETS_count);
+    overall_l2_accuracy = (l2_GETS_services + l2_GETX_services) / (GETX_count + GETS_count);
 
     GETS_l2_accuracy
         .name(name() + ".GETS_l2_accuracy")
@@ -447,25 +455,32 @@ void MulticastScoreboard::regStats()
         .name(name() + ".overall_prevalence")
         .desc("Rate at which true sharing occurs. Maximum bound of prediction benefit")
         ;
-    overall_prevalence = (GETS_true_positive + GETS_false_negative + GETX_true_positive + GETX_false_negative + PUTX_true_positive + PUTX_false_negative) / 
+    //overall_prevalence = (GETS_true_positive + GETS_false_negative + GETX_true_positive + GETX_false_negative + PUTX_true_positive + PUTX_false_negative) / 
+    //                     (GETS_true_positive + GETS_true_negative + GETS_false_positive + GETS_false_negative + 
+    //                      GETX_true_positive + GETX_true_negative + GETX_false_positive + GETX_false_negative + 
+    //                      PUTX_true_positive + PUTX_true_negative + PUTX_false_positive + PUTX_false_negative);        
+    overall_prevalence = (GETS_true_positive + GETS_false_negative + GETX_true_positive + GETX_false_negative) / 
                          (GETS_true_positive + GETS_true_negative + GETS_false_positive + GETS_false_negative + 
-                          GETX_true_positive + GETX_true_negative + GETX_false_positive + GETX_false_negative + 
-                          PUTX_true_positive + PUTX_true_negative + PUTX_false_positive + PUTX_false_negative);        
+                          GETX_true_positive + GETX_true_negative + GETX_false_positive + GETX_false_negative);       
 
 
     overall_sensitivity
         .name(name() + ".overall_sensitivity")
         .desc("Effectiveness of predictor when true sharing occurs")
         ;
-    overall_sensitivity = (GETS_true_positive + GETX_true_positive + PUTX_true_positive) / (
-                           GETS_true_positive + GETS_false_negative + GETX_true_positive + GETX_false_negative + PUTX_true_positive + PUTX_false_negative);
+    //overall_sensitivity = (GETS_true_positive + GETX_true_positive + PUTX_true_positive) / (
+    //                       GETS_true_positive + GETS_false_negative + GETX_true_positive + GETX_false_negative + PUTX_true_positive + PUTX_false_negative);
+    overall_sensitivity = (GETS_true_positive + GETX_true_positive) / (
+                           GETS_true_positive + GETS_false_negative + GETX_true_positive + GETX_false_negative);
   
     overall_pvp
         .name(name() + ".overall_pvp")
         .desc("Predictive value of positive test. Usefulness of a positive sharing prediction")
         ;
-    overall_pvp = (GETS_true_positive + GETX_true_positive + PUTX_true_positive) / (
-                   GETS_true_positive + GETS_false_positive + GETX_true_positive + GETX_false_positive + PUTX_true_positive + PUTX_false_positive);
+    //overall_pvp = (GETS_true_positive + GETX_true_positive + PUTX_true_positive) / (
+    //               GETS_true_positive + GETS_false_positive + GETX_true_positive + GETX_false_positive + PUTX_true_positive + PUTX_false_positive);
+    overall_pvp = (GETS_true_positive + GETX_true_positive) / (
+                   GETS_true_positive + GETS_false_positive + GETX_true_positive + GETX_false_positive);
 
     GETS_prevalence
         .name(name() + ".GETS_prevalence")

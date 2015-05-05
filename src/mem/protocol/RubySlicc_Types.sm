@@ -161,12 +161,12 @@ structure (CacheMemory, external = "yes") {
 
 
 structure (MulticastScoreboard, external = "yes") {
-  void record_GETS(MachineID, NetDest, NetDest, bool, MachineID);
-  void record_GETS(MachineID, NetDest);
-  void record_GETX(MachineID, NetDest, NetDest, bool, MachineID);
-  void record_GETX(MachineID, NetDest);
-  void record_PUTX(MachineID, NetDest, NetDest, bool, MachineID);
-  void record_PUTX(MachineID, NetDest);
+  void record_GETS(MachineID, NetDest, Address, NetDest, bool, MachineID);
+  void record_GETS(MachineID, NetDest, Address);
+  void record_GETX(MachineID, NetDest, Address, NetDest, bool, MachineID);
+  void record_GETX(MachineID, NetDest, Address);
+  void record_PUTX(MachineID, NetDest, Address, NetDest, bool, MachineID);
+  void record_PUTX(MachineID, NetDest, Address);
 }
 
 structure (WireBuffer, inport="yes", outport="yes", external = "yes") {
