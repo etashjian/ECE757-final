@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+#include <set>
 
 #include "base/statistics.hh"
 #include "mem/ruby/common/NetDest.hh"
@@ -42,6 +43,9 @@ class MulticastScoreboard : public SimObject {
   MulticastScoreboard& operator=(const MulticastScoreboard& obj);
 
  private:
+  bool is_shared_addr(Address addr);
+  std::set<Address> shared_addrs;
+
   // Tracking Stats
   Stats::Scalar GETS_count;
   Stats::Scalar GETX_count;

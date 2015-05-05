@@ -39,6 +39,10 @@ void MulticastScoreboard::record_GETS(MachineID l1, NetDest pred_set, Address ad
 {
   assert(l1.type == MachineType_L1Cache);
 
+  // check for shared addr
+  if(sharers.count() || owner_valid) shared_addrs.insert(addr);
+  if(!is_shared_addr(addr)) return;
+
   // update basic counts
   GETS_count++; 
   total_nodes_predicted += pred_set.count();
@@ -81,6 +85,9 @@ void MulticastScoreboard::record_GETS(MachineID l1, NetDest pred_set, Address ad
 {
   assert(l1.type == MachineType_L1Cache);
 
+  //if(sharers.count() || owner_valid) shared_addrs.insert(addr);
+  if(!is_shared_addr(addr)) return;
+
   // update basic counts
   GETS_count++;
   total_nodes_predicted += pred_set.count();
@@ -110,6 +117,9 @@ void MulticastScoreboard::record_GETS(MachineID l1, NetDest pred_set, Address ad
 void MulticastScoreboard::record_GETX(MachineID l1, NetDest pred_set, Address addr, NetDest sharers, bool owner_valid, MachineID owner)
 {
   assert(l1.type == MachineType_L1Cache);
+
+  if(sharers.count() || owner_valid) shared_addrs.insert(addr);
+  if(!is_shared_addr(addr)) return;
 
   // update basic counts
   GETX_count++;
@@ -154,6 +164,9 @@ void MulticastScoreboard::record_GETX(MachineID l1, NetDest pred_set, Address ad
 void MulticastScoreboard::record_GETX(MachineID l1, NetDest pred_set, Address addr)
 {
   assert(l1.type == MachineType_L1Cache);
+
+  //if(sharers.count() || owner_valid) shared_addrs.insert(addr);
+  if(!is_shared_addr(addr)) return;
 
   // update basic counts
   GETX_count++;
@@ -255,6 +268,12 @@ void MulticastScoreboard::record_PUTX(MachineID l1, NetDest pred_set, Address ad
   } else {
     PUTX_true_negative++;
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+bool MulticastScoreboard::is_shared_addr(Address addr)
+{
+  return shared_addrs.find(addr) != shared_addrs.end(); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
