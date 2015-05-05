@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+#include <set>
 
 #include "base/statistics.hh"
 #include "mem/ruby/common/NetDest.hh"
@@ -17,22 +18,22 @@ class MulticastScoreboard : public SimObject {
   MulticastScoreboard(const Params *p); 
 
   // Registers statistics for a multicast GETS operation where local directory entry exists
-  void record_GETS(MachineID l1, NetDest pred_set, NetDest sharers, bool owner_valid, MachineID owner);
+  void record_GETS(MachineID l1, NetDest pred_set, Address addr, NetDest sharers, bool owner_valid, MachineID owner);
 
   // Registers statistics for a multicast GETS operation where local directory entry doesn't exist
-  void record_GETS(MachineID l1, NetDest pred_set);
+  void record_GETS(MachineID l1, NetDest pred_set, Address addr);
 
   // Registers statistics for a multicast GETX operation where local directory entry exists
-  void record_GETX(MachineID l1, NetDest pred_set, NetDest sharers, bool owner_valid, MachineID owner);
+  void record_GETX(MachineID l1, NetDest pred_set, Address addr, NetDest sharers, bool owner_valid, MachineID owner);
   
   // Registers statistics for a multicast GETX operation where local directory entry doesn't exist
-  void record_GETX(MachineID l1, NetDest pred_set);
+  void record_GETX(MachineID l1, NetDest pred_set, Address addr);
 
   // Registers statistics for a multicast PUTX operation where local directory entry exists
-  void record_PUTX(MachineID l1, NetDest pred_set, NetDest sharers, bool owner_valid, MachineID owner);
+  void record_PUTX(MachineID l1, NetDest pred_set, Address addr, NetDest sharers, bool owner_valid, MachineID owner);
   
   // Registers statistics for a multicast PUTX operation where local directory entry doesn't exist
-  void record_PUTX(MachineID l1, NetDest pred_set);
+  void record_PUTX(MachineID l1, NetDest pred_set, Address addr);
   
 
   // FOR STAT HANDLING
@@ -42,6 +43,9 @@ class MulticastScoreboard : public SimObject {
   MulticastScoreboard& operator=(const MulticastScoreboard& obj);
 
  private:
+  bool is_shared_addr(Address addr);
+  std::set<Address> shared_addrs;
+
   // Tracking Stats
   Stats::Scalar GETS_count;
   Stats::Scalar GETX_count;
