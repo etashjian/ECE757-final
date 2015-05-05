@@ -45,10 +45,7 @@ python_class_map = {
                     "DMASequencer": "DMASequencer",
                     "Prefetcher":"Prefetcher",
                     "Cycles":"Cycles",
-                    "SnoopBasicPred":"RubySnoopBasicPred",
                     "MulticastScoreboard":"MulticastScoreboard",
-                    "StickyPred":"RubyStickyPred",
-                    "WideSharingPred":"WideSharingPred",
                    }
 
 class StateMachine(Symbol):
@@ -229,7 +226,7 @@ class $py_ident(RubyController):
                            "in StateMachine.py", param.type_ast.type.c_ident)
         code.dedent()
         code.write(path, '%s.py' % py_ident)
-
+        
 
     def printControllerHH(self, path):
         '''Output the method declarations for the class declaration'''
@@ -289,8 +286,7 @@ class $c_ident : public AbstractController
     void recordCacheTrace(int cntrl, CacheRecorder* tr);
     Sequencer* getSequencer() const;
 
-    bool functionalReadBuffers(PacketPtr&);
-    uint32_t functionalWriteBuffers(PacketPtr&);
+    int functionalWriteBuffers(PacketPtr&);
 
     void countTransition(${ident}_State state, ${ident}_Event event);
     void possibleTransition(${ident}_State state, ${ident}_Event event);
@@ -514,7 +510,7 @@ $c_ident::$c_ident(const Params *p)
 
             if re.compile("sequencer").search(param.ident):
                 code('m_${{param.ident}}_ptr->setController(this);')
-
+            
         for var in self.objects:
             if var.ident.find("mandatoryQueue") >= 0:
                 code('''
@@ -992,35 +988,12 @@ $c_ident::${{action.ident}}(const Address& addr)
         for func in self.functions:
             code(func.generateCode())
 
-        # Function for functional reads from messages buffered in the controller
-        code('''
-bool
-$c_ident::functionalReadBuffers(PacketPtr& pkt)
-{
-''')
-        for var in self.objects:
-            vtype = var.type
-            if vtype.isBuffer:
-                vid = "m_%s_ptr" % var.ident
-                code('if ($vid->functionalRead(pkt)) { return true; }')
-
-        for var in self.config_parameters:
-            vtype = var.type_ast.type
-            if vtype.isBuffer:
-                vid = "m_%s_ptr" % var.ident
-                code('if ($vid->functionalRead(pkt)) { return true; }')
-
-        code('''
-                return false;
-}
-''')
-
         # Function for functional writes to messages buffered in the controller
         code('''
-uint32_t
+int
 $c_ident::functionalWriteBuffers(PacketPtr& pkt)
 {
-    uint32_t num_functional_writes = 0;
+    int num_functional_writes = 0;
 ''')
         for var in self.objects:
             vtype = var.type
@@ -1529,7 +1502,7 @@ if (!checkResourceAvailable(%s_RequestType_%s, addr)) {
 </TR>
 ''')
         code('''
-<!- Column footer->
+<!- Column footer->     
 <TR>
   <TH> </TH>
 ''')
