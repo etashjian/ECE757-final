@@ -6,16 +6,10 @@
 using namespace std;
 
 OwnerPred::OwnerPred(const Params *p)
-    :SimObject(p), _tableLgSize( 1 ), _dirty( false )
+    :SimObject(p) 
 {
-    _tableSize = ( 1 << _tableLgSize );
-    _L1TableEntryArray.resize( _tableSize );
-    _L2TableEntryArray.resize( _tableSize );
-}
-
-OwnerPred::~OwnerPred()
-{
-  // DPRINTF(OwnerPred, "OwnerPred destructor is called\n");
+    _L1TableEntryArray.resize( 1 << 11 );
+    _L2TableEntryArray.resize( 1 << 14 );
 }
 
 NetDest OwnerPred::getPrediction(Address pc, Address addr, MachineID local) 
@@ -25,12 +19,6 @@ NetDest OwnerPred::getPrediction(Address pc, Address addr, MachineID local)
   //  add lcoal to mask
   prediction.add(local);
 
-  if( !_dirty ) {
-    for( size_t i = 0; i < _L1TableEntryArray.size(); i++ )
-      _L1TableEntryArray[i]._nodePtr = local.getNum();
-    _dirty = true;
-  }
-
   //  add L2 nodes to mask
   for (NodeID i = 0; i < MachineType_base_count(MachineType_L2Cache); i++) {
     MachineID mach = {MachineType_L2Cache, i};
@@ -38,10 +26,11 @@ NetDest OwnerPred::getPrediction(Address pc, Address addr, MachineID local)
   }
 
   //  indexed by PC
-  const size_t pcIndx = (pc.getAddress() & ~pc.maskLowOrderBits( _tableLgSize ));
-  const OwnerPredL1Table & l1table = _L1TableEntryArray[pcIndx];
-  const OwnerPredL2Table & l2table = _L2TableEntryArray[pcIndx];
-  const NodeID l1predNodePtr = l1table.getNodePtr();
+  const size_t pcIndxL1 = (pc.getAddress() & ~pc.maskLowOrderBits(11));
+  const size_t pcIndxL2 = pc.bitSelect(2, 15) ^ addr.bitSelect(5, 18);
+
+  const OwnerPredL1Table & l1table = _L1TableEntryArray[pcIndxL1];
+  const OwnerPredL2Table & l2table = _L2TableEntryArray[pcIndxL2];
 
   //  1st-level predictor 
   bool isC2C = false;       //  predicted as a $2$ transfer miss
@@ -57,7 +46,7 @@ NetDest OwnerPred::getPrediction(Address pc, Address addr, MachineID local)
   if( isC2C ) {
     if( l2table.cfdNode() >= 2 ) 
       for( size_t i = 0; i < 4; i++ ) {
-        if( l2table.getValidBit(i) && l2table.getNodePtr(i) != l1predNodePtr ) {
+        if( l2table.getValidBit(i) && l2table.getNodePtr(i) != l1table.getNodePtr() ) {
           MachineID l2pred = { MachineType_L1Cache, l2table.getNodePtr(i) };
           prediction.add(l2pred);
         }
@@ -70,8 +59,11 @@ NetDest OwnerPred::getPrediction(Address pc, Address addr, MachineID local)
 void OwnerPred::updatePredictionTable( Address pc, Address addr, MachineID realOwner )
 {
   //  increment the $2$ confidence
-  const size_t pcIndx = (pc.getAddress() & ~pc.maskLowOrderBits( _tableLgSize ));
-  OwnerPredL1Table & l1table = _L1TableEntryArray[pcIndx];
+  const size_t pcIndxL1 = (pc.getAddress() & ~pc.maskLowOrderBits(11));
+//  const size_t pcIndxL2 = pc.bitSelect(2, 15) ^ addr.bitSelect(5, 18);
+
+//  const OwnerPredL2Table & l2table = _L2TableEntryArray[pcIndxL2];
+  OwnerPredL1Table & l1table = _L1TableEntryArray[pcIndxL1];
 
   if( realOwner.getType() == MachineType_L2Cache ) {       //  the sender is from L2
     l1table.cfdC2C_dn();
@@ -82,15 +74,17 @@ void OwnerPred::updatePredictionTable( Address pc, Address addr, MachineID realO
   l1table.cfdC2C_up();
 
   const NodeID ownerID = realOwner.getNum();
-  if( ownerID == l1table.getNodePtr() )
-    l1table.cfdNode_up();
+
+  if( l1table.cfdNode() == 0 )
+    l1table._nodePtr = ownerID;
   else {
-    l1table.cfdNode_dn();
-    if( l1table.cfdNode() < 2 ) 
-      l1table._nodePtr = ownerID;
+    if( l1table._nodePtr == ownerID )
+      l1table.cfdNode_up();
+    else
+      l1table.cfdNode_dn();
   }
 
-  OwnerPredL2Table & l2table = _L2TableEntryArray[pcIndx];
+  OwnerPredL2Table & l2table = _L2TableEntryArray[pcIndxL2];
   l2table.updateWithRealOwnerID( ownerID );
 }
 
@@ -102,7 +96,7 @@ RubyOwnerPredParams::create()
 }
 
 OwnerPredL1Table::OwnerPredL1Table() 
-  : _confdCnt(2), _confdPtr(2), _nodePtr(0) 
+  : _confdCnt(1), _confdPtr(0), _nodePtr(0) 
 {}
 
 OwnerPredL1Table::~OwnerPredL1Table() 

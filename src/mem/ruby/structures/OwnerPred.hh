@@ -32,9 +32,6 @@ class OwnerPred : public SimObject {
     std::vector<OwnerPredL1Table> _L1TableEntryArray;
     std::vector<OwnerPredL2Table> _L2TableEntryArray;
 
-    size_t _tableSize;
-    size_t _tableLgSize;
-
     bool _dirty;
 };
 
