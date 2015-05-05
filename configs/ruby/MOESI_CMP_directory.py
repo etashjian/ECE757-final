@@ -117,7 +117,7 @@ def create_system(options, system, dma_ports, ruby_system):
         # added for 757 project
         #l1_cntrl.predictor = RubySnoopBasicPred()
         #l1_cntrl.predictor = RubyStickyPred()
-	l1_cntrl.predictor = WideSharingPred()
+	      l1_cntrl.predictor = WideSharingPred()
         l1_cntrl.sequencer = cpu_seq
 
 
