@@ -121,6 +121,7 @@ machine(L1Cache, "Directory protocol")
     DataBlock DataBlk,       desc="data for the block, required for concurrent writebacks";
     bool Dirty,              desc="Is the data dirty (different than memory)?";
     int NumPendingMsgs, default="0",     desc="Number of acks/data messages that this processor is waiting for";
+    Address PC,           desc="Program counter";
   }
 
   structure(TBETable, external ="yes") {
@@ -301,6 +302,7 @@ machine(L1Cache, "Directory protocol")
           if (in_msg.Requestor == machineID && in_msg.RequestorMachine == MachineType:L1Cache) {
             trigger(Event:Own_GETX, in_msg.Addr,
                     getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
+            pred.updatePredictionTable( TBEs[in_msg.Addr].PC, in_msg.Addr, in_msg.Sender ); //  update prediction table
           } else {
             trigger(Event:Fwd_GETX, in_msg.Addr,
                     getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
@@ -308,6 +310,8 @@ machine(L1Cache, "Directory protocol")
         } else if (in_msg.Type == CoherenceRequestType:GETS) {
           trigger(Event:Fwd_GETS, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
+          pred.updatePredictionTable( TBEs[in_msg.Addr].PC, in_msg.Addr, in_msg.Sender );   //  update prediction table
+
         } else if (in_msg.Type == CoherenceRequestType:DMA_READ) {
           trigger(Event:Fwd_DMA, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
@@ -321,6 +325,7 @@ machine(L1Cache, "Directory protocol")
           trigger(Event:Writeback_Nack, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else if (in_msg.Type == CoherenceRequestType:INV) {
+          pred.updatePredictionTable( TBEs[in_msg.Addr].PC, in_msg.Addr, in_msg.Sender ); //  update prediction table
           trigger(Event:Inv, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else {

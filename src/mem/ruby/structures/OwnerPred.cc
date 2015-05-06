@@ -6,7 +6,7 @@
 using namespace std;
 
 OwnerPred::OwnerPred(const Params *p)
-    :SimObject(p) 
+    :SimObject(p) , _dirty(false)
 {
     _L1TableEntryArray.resize( 1 << 11 );
     _L2TableEntryArray.resize( 1 << 14 );
@@ -21,15 +21,24 @@ NetDest OwnerPred::getPrediction(Address pc, Address addr, MachineID local)
   //  add lcoal to mask
   prediction.add(local);
 
+  //  add L1 nodes to mask
+  for (NodeID i = 0; i < MachineType_base_count(MachineType_L1Cache); i++) {
+    MachineID mach = {MachineType_L1Cache, i};
+    prediction.add(mach);
+  }
+
   //  add L2 nodes to mask
   for (NodeID i = 0; i < MachineType_base_count(MachineType_L2Cache); i++) {
     MachineID mach = {MachineType_L2Cache, i};
     prediction.add(mach);
   }
 
+  return prediction;
+
   //  indexed by PC
   const size_t pcIndxL1 = (pc.getAddress() & ~pc.maskLowOrderBits(11));
   const size_t pcIndxL2 = pc.bitSelect(2, 15) ^ addr.bitSelect(5, 18);
+  assert( pcIndxL2 < (1<<15) );
 
   const OwnerPredL1Table & l1table = _L1TableEntryArray[pcIndxL1];
   const OwnerPredL2Table & l2table = _L2TableEntryArray[pcIndxL2];
@@ -76,13 +85,12 @@ void OwnerPred::updatePredictionTable( Address pc, Address addr, MachineID realO
 
   const NodeID ownerID = realOwner.getNum();
 
-  if( l1table.cfdNode() == 0 )
-    l1table._nodePtr = ownerID;
+  if( l1table.cfdNode() == ownerID )
+    l1table.cfdNode_up();
   else {
-    if( l1table._nodePtr == ownerID )
-      l1table.cfdNode_up();
-    else
-      l1table.cfdNode_dn();
+    l1table.cfdNode_dn();
+    if( l1table.cfdNode() < 2 )
+      l1table._nodePtr = ownerID;
   }
 
   OwnerPredL2Table & l2table = _L2TableEntryArray[pcIndxL2];
@@ -97,7 +105,7 @@ RubyOwnerPredParams::create()
 }
 
 OwnerPredL1Table::OwnerPredL1Table() 
-  : _confdCnt(1), _confdPtr(0), _nodePtr(0) 
+  : _confdCnt(1), _confdPtr(1), _nodePtr(0) 
 {}
 
 OwnerPredL1Table::~OwnerPredL1Table() 

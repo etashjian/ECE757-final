@@ -32,6 +32,7 @@ class OwnerPred : public SimObject {
     std::vector<OwnerPredL1Table> _L1TableEntryArray;
     std::vector<OwnerPredL2Table> _L2TableEntryArray;
 
+    bool _dirty;
 };
 
 class OwnerPredL1Table
