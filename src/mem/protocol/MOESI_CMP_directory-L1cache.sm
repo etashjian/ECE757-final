@@ -302,7 +302,6 @@ machine(L1Cache, "Directory protocol")
           if (in_msg.Requestor == machineID && in_msg.RequestorMachine == MachineType:L1Cache) {
             trigger(Event:Own_GETX, in_msg.Addr,
                     getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
-            pred.updatePredictionTable( TBEs[in_msg.Addr].PC, in_msg.Addr, in_msg.Sender ); //  update prediction table
           } else {
             trigger(Event:Fwd_GETX, in_msg.Addr,
                     getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
@@ -310,7 +309,6 @@ machine(L1Cache, "Directory protocol")
         } else if (in_msg.Type == CoherenceRequestType:GETS) {
           trigger(Event:Fwd_GETS, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
-          pred.updatePredictionTable( TBEs[in_msg.Addr].PC, in_msg.Addr, in_msg.Sender );   //  update prediction table
 
         } else if (in_msg.Type == CoherenceRequestType:DMA_READ) {
           trigger(Event:Fwd_DMA, in_msg.Addr,
@@ -325,7 +323,6 @@ machine(L1Cache, "Directory protocol")
           trigger(Event:Writeback_Nack, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else if (in_msg.Type == CoherenceRequestType:INV) {
-          pred.updatePredictionTable( TBEs[in_msg.Addr].PC, in_msg.Addr, in_msg.Sender ); //  update prediction table
           trigger(Event:Inv, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else {
@@ -334,6 +331,7 @@ machine(L1Cache, "Directory protocol")
       }
     }
   }
+//machineID
 
   // Response Network
   in_port(responseToL1Cache_in, ResponseMsg, responseToL1Cache) {
@@ -343,9 +341,15 @@ machine(L1Cache, "Directory protocol")
           trigger(Event:Ack, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else if (in_msg.Type == CoherenceResponseType:DATA) {
+          if( machineID != in_msg.Sender ) {
+            pred.updatePredictionTable( TBEs[in_msg.Addr].PC, in_msg.Addr, machineID, in_msg.Sender ); //  update prediction table
+          }
           trigger(Event:Data, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else if (in_msg.Type == CoherenceResponseType:DATA_EXCLUSIVE) {
+          if( machineID != in_msg.Sender ) {
+            pred.updatePredictionTable( TBEs[in_msg.Addr].PC, in_msg.Addr, machineID, in_msg.Sender ); //  update prediction table
+          }
           trigger(Event:Exclusive_Data, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else {
@@ -682,6 +686,9 @@ machine(L1Cache, "Directory protocol")
     assert(is_valid(cache_entry));
     tbe.DataBlk := cache_entry.DataBlk; // Data only used for writebacks
     tbe.Dirty := cache_entry.Dirty;
+    peek(mandatoryQueue_in, RubyRequest) {
+      tbe.PC := in_msg.ProgramCounter;
+    }
   }
 
   action(j_popTriggerQueue, "j", desc="Pop trigger queue.") {

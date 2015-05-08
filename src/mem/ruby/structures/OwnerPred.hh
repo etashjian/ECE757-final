@@ -23,7 +23,7 @@ class OwnerPred : public SimObject {
     ~OwnerPred();
 
     NetDest getPrediction(Address pc, Address addr, MachineID local);
-    void updatePredictionTable( Address pc, Address addr, MachineID realOwner );
+    void updatePredictionTable( Address pc, Address addr, MachineID requestor, MachineID sender );
 
     // MANDATORY SIM OBJECT METHODS
     OwnerPred & operator=(const OwnerPred & obj);
@@ -40,18 +40,18 @@ class OwnerPredL1Table
   friend class OwnerPred;
 
   public:
-  OwnerPredL1Table();
-  ~OwnerPredL1Table();
+  OwnerPredL1Table() : _confdCnt(1), _confdPtr(1), _nodePtr(0) {}
+  ~OwnerPredL1Table() {}
 
   private:
-  inline unsigned cfdC2C() const { return _confdCnt; }
-  inline unsigned cfdNode() const { return _confdPtr; }
+  inline unsigned getConfidenceC2C() const { return _confdCnt; }
+  inline unsigned getConfidenceNode() const { return _confdPtr; }
   inline NodeID getNodePtr() const { return _confdPtr; }
 
-  inline void cfdC2C_up() { if( _confdCnt < 3 ) ++ _confdCnt; }
-  inline void cfdC2C_dn() { if( _confdCnt > 0 ) -- _confdCnt; }
-  inline void cfdNode_up() { if( _confdPtr < 3 ) ++ _confdPtr; }
-  inline void cfdNode_dn() { if( _confdPtr > 0 ) -- _confdPtr; }
+  inline void incrConfidenceC2C() { if( _confdCnt < 3 ) ++ _confdCnt; }
+  inline void decrConfidenceC2C() { if( _confdCnt > 0 ) -- _confdCnt; }
+  inline void incrConfidenceNode() { if( _confdPtr < 3 ) ++ _confdPtr; }
+  inline void decrConfidenceNode() { if( _confdPtr > 0 ) -- _confdPtr; }
 
   unsigned _confdCnt : 2;   //  2-bit saturating counter regarding confidence about $2$ transfer;
   unsigned _confdPtr : 2;   //  2-bit saturating counter
@@ -67,13 +67,13 @@ class OwnerPredL2Table
   ~OwnerPredL2Table();
 
   private:
-  inline unsigned cfdNode() const { return _confdPtr; }
+  inline unsigned getConfidenceNode() const { return _confdPtr; }
 
   NodeID getNodePtr(size_t idx) const;
   bool getValidBit(size_t idx) const;
 
-  inline void cfdNode_up() { if( _confdPtr < 3 ) ++ _confdPtr; }
-  inline void cfdNode_dn() { if( _confdPtr > 0 ) -- _confdPtr; }
+  inline void incrConfidenceNode() { if( _confdPtr < 3 ) ++ _confdPtr; }
+  inline void decrConfidenceNode() { if( _confdPtr > 0 ) -- _confdPtr; }
 
   inline void setValidBit(size_t idx) {
     assert( 0 <= idx && idx < 4 );
@@ -85,7 +85,7 @@ class OwnerPredL2Table
 
   unsigned _confdPtr : 2;
   NodeID _nodePtrArray[4];          //  predicted target node array
-  unsigned _missedTimesArray[4];
+  unsigned _hitHistLen[4];
   bool _nodeValidArray[4];          //  prediction valid array
 
 };

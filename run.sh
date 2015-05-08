@@ -8,7 +8,6 @@
 #  raytrace
 #  swaptions
 #  fluidanimate
-#  vips
 #  x264
 #  canneal
 #  dedup
