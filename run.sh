@@ -17,7 +17,7 @@ for benchmark in {bodytrack, facesim, ferret, freqmine, raytrace, swaptions, flu
 do
   SCRIPT=$benchmark
   build/X86/gem5.fast \
-    --stats-file=$benchmark.txt \
+    --stats-file=$benchmark-out.txt \
     configs/example/fs.py \
     --disk-image=parsec.img \
     --kernel=x86_64-vmlinux-2.6.22.9.smp \
