@@ -9,20 +9,23 @@ typedef WideSharingPredParams Params;
 //Main method - returns prediction
 NetDest WideSharingPred::getPrediction(Address pc, MachineID local, int get_indicator) {
   NetDest prediction;
+
+ int inGETS = 2;
+ int inGETX = 2;
   
   //gets called predictor
   if (get_indicator==1) {
 
-  int inTable = 2;
 
+///asdf
 	//search through array looking for pc
 	for (int i = 0; i < 1024; i++) {
 		//if PC found in any of the 1024 entries
- 		if (PredTableEntry[i].pc == pc) {
+ 		if (pred_table[i].pc == pc) {
 			//we set our prediction NetDest equal to that entries OWNER NetDest (since it is a GETS)
-			prediction = PredTableEntry[i].owner;
+			prediction = pred_table[i].owner;
 			//integer value indicates we've found the entry
-			int inTable = 1;
+			inGETS = 1;
 		}//end if
 	}//end for
 
@@ -35,13 +38,13 @@ NetDest WideSharingPred::getPrediction(Address pc, MachineID local, int get_indi
 	//I'm sure there is a better way to do this, but this is the way I'm doing it. 
 	//Further, we must also set our predictor NetDest to include all nodes
 
-	if ((int inTable == 2)) {
+	if ((inGETS == 2)) {
 		//adding the PC into the the entry, at the index our counter indicates. By moding it by 1024, we always replace the oldest entry 	
-		PredTableEntry[PredTableEntry[0].counter%1024].pc = pc;
+		pred_table[pred_table[0].counter%1024].pc = pc;
 		//We could clear the Owner Field and Sharer field that the older entry had, but we will just do that in update after we get a Response
 		//so there is no point in doing it here. 
 		//updating the counter
-		PredTableEntry[0].counter = PredTableEntry[0].counter++;
+		pred_table[0].counter = pred_table[0].counter + 1;
 		}//end if
    }//end if
 
@@ -49,16 +52,16 @@ NetDest WideSharingPred::getPrediction(Address pc, MachineID local, int get_indi
   //This is almost identical code for when we have a GETX calling predictor
   if (get_indicator==2) {
 
-  int inTable = 2;
+ 
 
 	//search through array looking for pc
 	for (int i = 0; i < 1024; i++) {
 		//if PC found in any of the 1024 entries
- 		if (PredTableEntry[i].pc == pc) {
+ 		if (pred_table[i].pc == pc) {
 			//we set our prediction NetDest equal to that entries OWNER NetDest (since it is a GETS)
-			prediction = PredTableEntry[i].ownersharers;
+			prediction = pred_table[i].ownersharers;
 			//integer value indicates we've found the entry
-			int inTable = 1;
+			inGETX = 1;
 		}//end if
 	}//end for
 
@@ -71,13 +74,13 @@ NetDest WideSharingPred::getPrediction(Address pc, MachineID local, int get_indi
 	//I'm sure there is a better way to do this, but this is the way I'm doing it. 
 	//Further, we must also set our predictor NetDest to include all nodes
 
-	if ((int inTable == 2)) {
+	if ((inGETX == 2)) {
 		//adding the PC into the the entry, at the index our counter indicates. By moding it by 1024, we always replace the oldest entry 	
-		PredTableEntry[PredTableEntry[0].counter%1024].pc = pc;
+		pred_table[pred_table[0].counter%1024].pc = pc;
 		//We could clear the Owner Field and Sharer field that the older entry had, but we will just do that in update after we get a Response
 		//so there is no point in doing it here. 
 		//updating the counter
-		PredTableEntry[0].counter = PredTableEntry[0].counter++;
+		pred_table[0].counter = pred_table[0].counter + 1;
 		}//end if
   
    }//end if
@@ -94,10 +97,10 @@ NetDest WideSharingPred::getPrediction(Address pc, MachineID local, int get_indi
 
  
   //if on a GETS or GETX, if the PC wasn't in the table, we have to add all other L1 nodes
-  if(inTable==2){
+  if((inGETX==2) && (inGETS)) {
   	for (NodeID i = 0; i < MachineType_base_count(MachineType_L1Cache); i++) {
 		MachineID mach = {MachineType_L1Cache, i}; 
-		pridiction.add(mach);
+		prediction.add(mach);
 	}//end for
   }//end if
  
@@ -116,21 +119,22 @@ void WideSharingPred::updateTable(Address pc, MachineID local, NetDest sharer) {
 
 //this is the newowner netdest
 NetDest newowner;
-newonwer.add(local)
+newowner.add(local);
+int i;
 
 //search through array looking for pc
-	for (int i = 0; i < 1024; i++) {
+	for (i = 0; i < 1024; i++) {
 		//if PC found in any of the 1024 entries
- 		if (PredTableEntry[i].pc == pc) {
+ 		if (pred_table[i].pc == pc) {
 			//Update owner entry with owner
-			PredTableEntry[i].owner = newowner;
+			pred_table[i].owner = newowner;
 			//Also, we update our owner sharer netdest to include owner and sharers
-			PredTableEntry[i].ownersharer = sharer;
-			PredTableEntry[i].ownersharer.add(local);
+			pred_table[i].ownersharers = sharer;
+			pred_table[i].ownersharers.add(local);
 		}//end if
 	}//end for
-
 }//end updateTable
+
 
 
 WideSharingPred *
@@ -140,12 +144,3 @@ WideSharingPredParams::create()
 }
 
 
-
-
-
-//TODO:
-
-
-//Create Presentation Slides - 2 tops. 
-	//#1 explain method - indexing off PC(why different?), GETX, GETS slightly different, update policy
-	//#2 show/talk/compare results?

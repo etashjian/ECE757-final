@@ -30,16 +30,11 @@ machine(L1Cache, "Directory protocol")
  : Sequencer * sequencer;
    CacheMemory * L1Icache;
    CacheMemory * L1Dcache;
-   WideSharingPred * pred;
+   WideSharingPred * predictor;
    int l2_select_num_bits;
    Cycles request_latency := 2;
    Cycles use_timeout_latency := 50;
    bool send_evictions;
-
-   // cs757 added
-   //SnoopBasicPred * predictor;
-   //StickyPred * predictor;
-   WideSharingPred * predictor;
 
    // Message Queues
    // From this node's L1 cache TO the network
@@ -219,18 +214,34 @@ machine(L1Cache, "Directory protocol")
     }
   }
 
-  DataBlock getDataBlock(Address addr), return_by_ref="yes" {
+  void functionalRead(Address addr, Packet *pkt) {
     Entry cache_entry := getCacheEntry(addr);
     if(is_valid(cache_entry)) {
-        return cache_entry.DataBlk;
+      testAndRead(addr, cache_entry.DataBlk, pkt);
+    } else {
+      TBE tbe := TBEs[addr];
+      if(is_valid(tbe)) {
+        testAndRead(addr, tbe.DataBlk, pkt);
+      } else {
+        error("Data block missing!");
+      }
+    }
+  }
+
+  int functionalWrite(Address addr, Packet *pkt) {
+    int num_functional_writes := 0;
+
+    Entry cache_entry := getCacheEntry(addr);
+    if(is_valid(cache_entry)) {
+      num_functional_writes := num_functional_writes +
+        testAndWrite(addr, cache_entry.DataBlk, pkt);
+      return num_functional_writes;
     }
 
     TBE tbe := TBEs[addr];
-    if(is_valid(tbe)) {
-      return tbe.DataBlk;
-    }
-
-    error("Data block missing!");
+    num_functional_writes := num_functional_writes +
+        testAndWrite(addr, tbe.DataBlk, pkt);
+    return num_functional_writes;
   }
 
   Event mandatory_request_type_to_event(RubyRequestType type) {
@@ -311,8 +322,8 @@ machine(L1Cache, "Directory protocol")
           trigger(Event:Writeback_Nack, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else if (in_msg.Type == CoherenceRequestType:INV) {
-		      //INVALIDATE
-	        predictor.updateTable(TBEs[in_msg.Addr].PC, in_msg.Requestor, in_msg.PredictionMask); // I ADDED
+                     //INVALIDATE
+              predictor.updateTable(TBEs[in_msg.Addr].PC, in_msg.Requestor, in_msg.PredictionMask); // I ADDED
           trigger(Event:Inv, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else {
@@ -330,14 +341,13 @@ machine(L1Cache, "Directory protocol")
           trigger(Event:Ack, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else if (in_msg.Type == CoherenceResponseType:DATA) {
-	
-		      //calling predictors update table function on a response message - DATA
-		      predictor.updateTable(TBEs[in_msg.Addr].PC, in_msg.Sender, in_msg.PredictionMask); // I ADDED
+                     //calling predictors update table function on a response message - DATA
+                     predictor.updateTable(TBEs[in_msg.Addr].PC, in_msg.Sender, in_msg.PredictionMask); // I ADDED
           trigger(Event:Data, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else if (in_msg.Type == CoherenceResponseType:DATA_EXCLUSIVE) {
-		      //calling predictors update table function on a response message - DATA
-		      predictor.updateTable(TBEs[in_msg.Addr].PC, in_msg.Sender, in_msg.PredictionMask); // I ADDED
+                     //calling predictors update table function on a response message - DATA
+                     predictor.updateTable(TBEs[in_msg.Addr].PC, in_msg.Sender, in_msg.PredictionMask); // I ADDED
           trigger(Event:Exclusive_Data, in_msg.Addr,
                   getCacheEntry(in_msg.Addr), TBEs[in_msg.Addr]);
         } else {
@@ -460,16 +470,14 @@ machine(L1Cache, "Directory protocol")
   }
 
   action(d_issuePUTX, "d", desc="Issue PUTX") {
-    peek(mandatoryQueue_in, RubyRequest) {
-      enqueue(requestNetwork_out, RequestMsg, request_latency) {
-        out_msg.Addr := address;
-        out_msg.Type := CoherenceRequestType:PUTX;
-        out_msg.Requestor := machineID;
-        out_msg.RequestorMachine := MachineType:L1Cache;
-        out_msg.Destination.add(mapAddressToRange(address, MachineType:L2Cache,
-                l2_select_low_bit, l2_select_num_bits, intToID(0)));
-        out_msg.MessageSize := MessageSizeType:Writeback_Control;
-      }
+    enqueue(requestNetwork_out, RequestMsg, request_latency) {
+      out_msg.Addr := address;
+      out_msg.Type := CoherenceRequestType:PUTX;
+      out_msg.Requestor := machineID;
+      out_msg.RequestorMachine := MachineType:L1Cache;
+      out_msg.Destination.add(mapAddressToRange(address, MachineType:L2Cache,
+              l2_select_low_bit, l2_select_num_bits, intToID(0)));
+      out_msg.MessageSize := MessageSizeType:Writeback_Control;
     }
   }
 
