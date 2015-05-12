@@ -94,24 +94,6 @@ structure (NetDest, external = "yes", non_obj="yes") {
   MachineID smallestElement(MachineType);
 }
 
-structure (WideSharingPred, external = "yes", non_obj="yes") {
-  NetDest getPrediction(Address pc, MachineID local, int get_indicator);
-  void updateTable(Address pc, MachineID local, NetDest sharer);
-}
-
-
-structure (SnoopBasicPred, external = "yes", non_obj="yes") {
-    NetDest getPrediction(Address addr, MachineID local);
-    void profileInMsg(int, bool);
-    int getGETS();
-    int getGETX();
-    int getPUTX();
-}
-
-structure (StickyPred, external = "yes", non_obj="yes") {
-    NetDest getPrediction(Address addr, MachineID local);
-}
-
 structure (Sequencer, external = "yes") {
   void readCallback(Address, DataBlock);
   void readCallback(Address, DataBlock, bool);
@@ -175,6 +157,13 @@ structure (CacheMemory, external = "yes") {
   Scalar demand_hits;
 }
 
+
+structure (WideSharingPred, external = "yes", non_obj="yes") {
+  NetDest getPrediction(Address pc, MachineID local, int get_indicator);
+  void updateTable(Address pc, MachineID local, NetDest sharer);
+}
+
+
 structure (MulticastScoreboard, external = "yes") {
   void record_GETS(MachineID, NetDest, NetDest, bool, MachineID);
   void record_GETS(MachineID, NetDest);
@@ -186,10 +175,6 @@ structure (MulticastScoreboard, external = "yes") {
 
 structure (WireBuffer, inport="yes", outport="yes", external = "yes") {
 
-}
-
-structure (MemoryControl, inport="yes", outport="yes", external = "yes") {
-  void recordRequestType(CacheRequestType);
 }
 
 structure (DMASequencer, external = "yes") {
