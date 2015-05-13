@@ -1,0 +1,7 @@
+#! /bin/sh
+echo 'PARSEC bodytrack benchmark'
+cd home/Benchmarks/parsec-2.1/bin/
+./parsecmgmt -a run -x pre -i simdev -n 8 -p bodytrack
+echo
+echo 'done'
+m5 exit
